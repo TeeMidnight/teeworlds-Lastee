@@ -50,24 +50,16 @@ class CGameContext : public IGameServer
 	static void ConTuneParam(IConsole::IResult *pResult, void *pUserData);
 	static void ConTuneReset(IConsole::IResult *pResult, void *pUserData);
 	static void ConTunes(IConsole::IResult *pResult, void *pUserData);
-	static void ConPause(IConsole::IResult *pResult, void *pUserData);
-	static void ConChangeMap(IConsole::IResult *pResult, void *pUserData);
-	static void ConRestart(IConsole::IResult *pResult, void *pUserData);
 	static void ConSay(IConsole::IResult *pResult, void *pUserData);
 	static void ConBroadcast(IConsole::IResult *pResult, void *pUserData);
 	static void ConSetTeam(IConsole::IResult *pResult, void *pUserData);
 	static void ConSetTeamAll(IConsole::IResult *pResult, void *pUserData);
-	static void ConSwapTeams(IConsole::IResult *pResult, void *pUserData);
-	static void ConShuffleTeams(IConsole::IResult *pResult, void *pUserData);
-	static void ConLockTeams(IConsole::IResult *pResult, void *pUserData);
-	static void ConForceTeamBalance(IConsole::IResult *pResult, void *pUserData);
 	static void ConAddVote(IConsole::IResult *pResult, void *pUserData);
 	static void ConRemoveVote(IConsole::IResult *pResult, void *pUserData);
 	static void ConClearVotes(IConsole::IResult *pResult, void *pUserData);
 	static void ConVote(IConsole::IResult *pResult, void *pUserData);
 	static void ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	static void ConchainSettingUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
-	static void ConchainGameinfoUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
 	static void NewCommandHook(const CCommandManager::CCommand *pCommand, void *pContext);
 	static void RemoveCommandHook(const CCommandManager::CCommand *pCommand, void *pContext);
@@ -96,7 +88,7 @@ public:
 	CEventHandler m_Events;
 	class CPlayer *m_apPlayers[MAX_CLIENTS];
 
-	class IGameController *m_pController;
+	class CGameController *m_pController;
 	CGameWorld m_World;
 	CCommandManager m_CommandManager;
 
@@ -104,8 +96,6 @@ public:
 
 	// helper functions
 	class CCharacter *GetPlayerChar(int ClientID);
-
-	int m_LockTeams;
 
 	// voting
 	void StartVote(const char *pDesc, const char *pCommand, const char *pReason);
@@ -168,9 +158,6 @@ public:
 	//
 	void CheckPureTuning();
 	void SendTuningParams(int ClientID);
-
-	//
-	void SwapTeams();
 
 	// engine events
 	virtual void OnInit();

@@ -168,7 +168,7 @@ void CGameWorld::Tick()
 	if(m_ResetRequested)
 		Reset();
 
-	if(m_Paused || GameServer()->m_pController->IsGamePaused())
+	if(m_Paused)
 	{
 		// update all objects
 		for(int i = 0; i < NUM_ENTTYPES; i++)

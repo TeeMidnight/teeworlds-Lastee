@@ -141,7 +141,6 @@ CNetConverter::CNetConverter(IServer *pServer, class CConfig *pConfig) :
     m_pServer(pServer),
     m_pConfig(pConfig)
 {
-    m_GameFlags = 0;
     ResetSnapItemsEx();
 }
 
@@ -216,23 +215,6 @@ bool CNetConverter::DeepConvertClientMsg6(CMsgUnpacker *pItem, int& Type, bool S
         case protocol6::NETMSGTYPE_CL_SETTEAM:
         {
             int Team = pItem->GetInt();
-
-            if(GameServer()->m_LockTeams)
-            {
-                if(m_aChatTick[FromClientID] + 5 * Server()->TickSpeed() > Server()->Tick())
-                    return false;
-
-                protocol6::CNetMsg_Sv_Chat Chat;
-                Chat.m_ClientID = -1;
-                Chat.m_pMessage = Localize(TempCode, "Teams are locked");
-                Chat.m_Team = 0;
-
-                m_aChatTick[FromClientID] = Server()->Tick();
-
-                Server()->SendPackMsg(&Chat, MSGFLAG_VITAL | MSGFLAG_NORECORD, FromClientID, false);
-                
-                return false;
-            }
 
             if(pPlayer->m_TeamChangeTick > Server()->Tick())
             {
@@ -483,7 +465,7 @@ bool CNetConverter::DeepSnapConvert6(void *pItem, void *pSnapClass, int Type, in
             
             if(!pObj6)
                 return false;
-            pObj6->m_GameFlags = ((IGameController *) pSnapClass)->GameFlags();
+            pObj6->m_GameFlags = 0;
             pObj6->m_GameStateFlags = 0;
             if(pObj7->m_GameStateFlags&GAMESTATEFLAG_GAMEOVER || pObj7->m_GameStateFlags&GAMESTATEFLAG_ROUNDOVER)
                 pObj6->m_GameStateFlags |= protocol6::GAMESTATEFLAG_GAMEOVER;
@@ -499,11 +481,11 @@ bool CNetConverter::DeepSnapConvert6(void *pItem, void *pSnapClass, int Type, in
             else if((pObj7->m_GameStateFlags&GAMESTATEFLAG_WARMUP || pObj7->m_GameStateFlags&GAMESTATEFLAG_STARTCOUNTDOWN) && (!pObj7->m_GameStateEndTick))
                 pObj6->m_WarmupTimer = Server()->TickSpeed() * 999;
 
-            pObj6->m_ScoreLimit = Config()->m_SvScorelimit;
-            pObj6->m_TimeLimit = Config()->m_SvTimelimit;
+            pObj6->m_ScoreLimit = 0;
+            pObj6->m_TimeLimit = 0;
 
-            pObj6->m_RoundNum = (str_length(Config()->m_SvMaprotation) && Config()->m_SvMatchesPerMap) ? Config()->m_SvMatchesPerMap : 0;
-            pObj6->m_RoundCurrent = ((IGameController *) pSnapClass)->MatchCount();
+            pObj6->m_RoundNum = 0;
+            pObj6->m_RoundCurrent = 0;
 
             if(!Config()->m_SvDDNetSnap)
                 return true;
@@ -623,7 +605,7 @@ bool CNetConverter::DeepSnapConvert6(void *pItem, void *pSnapClass, int Type, in
                 pObjDDNet->m_Flags |= protocol6::CHARACTERFLAG_COLLISION_DISABLED;
             if(!GameServer()->Tuning()->m_PlayerHooking)
                 pObjDDNet->m_Flags |= protocol6::CHARACTERFLAG_HOOK_HIT_DISABLED;
-            if(GameServer()->m_LockTeams || pFrom->GetPlayer()->m_TeamChangeTick > Server()->Tick())
+            if(pFrom->GetPlayer()->m_TeamChangeTick > Server()->Tick())
                 pObjDDNet->m_Flags |= protocol6::CHARACTERFLAG_LOCK_MODE;
             pObjDDNet->m_FreezeStart = -1;
             pObjDDNet->m_FreezeEnd = 0;
@@ -664,7 +646,7 @@ bool CNetConverter::DeepSnapConvert6(void *pItem, void *pSnapClass, int Type, in
             pObj6->m_Latency = pObj7->m_Latency;
             pObj6->m_Local = (ClientID == ToClientID) ? 1 : 0;
             pObj6->m_Score = pObj7->m_Score;
-            pObj6->m_Team = ((CPlayer *) pSnapClass)->m_DeadSpecMode ? protocol6::TEAM_SPECTATORS : ((CPlayer *) pSnapClass)->GetTeam();
+            pObj6->m_Team = ((CPlayer *) pSnapClass)->GetTeam();
 
             if(!Config()->m_SvDDNetSnap)
                 return true;
@@ -718,8 +700,6 @@ bool CNetConverter::DeepSnapConvert6(void *pItem, void *pSnapClass, int Type, in
 
 bool CNetConverter::SnapNewItemConvert(void *pItem, void *pSnapClass, int Type, int ID, int Size, int ToClientID)
 {
-    m_GameFlags = GameServer()->m_pController->GameFlags();
-    
     void *pObj = nullptr; // Snap Obj
     if(Server()->ClientProtocol(ToClientID) == NETPROTOCOL_SEVEN) // do nothing
     {
@@ -809,7 +789,7 @@ int CNetConverter::DeepMsgConvert6(CMsgPacker *pMsg, int Flags, int ToClientID)
             
             // send chat
 	        char aBuf[128];
-            switch(GetStrTeam(Team, m_GameFlags&GAMEFLAG_TEAMS))
+            switch(GetStrTeam(Team, false))
             {
                 case STR_TEAM_GAME: str_format(aBuf, sizeof(aBuf), Localize(TempCode, "'%s' joined the game"), Server()->ClientName(ClientID)); break;
                 case STR_TEAM_RED: str_format(aBuf, sizeof(aBuf), Localize(TempCode, "'%s' joined the red team"), Server()->ClientName(ClientID)); break;
@@ -942,7 +922,7 @@ int CNetConverter::DeepMsgConvert6(CMsgPacker *pMsg, int Flags, int ToClientID)
                 return 0;
 
             char aBuf[128];
-            switch(GetStrTeam(Team, m_GameFlags&GAMEFLAG_TEAMS))
+            switch(GetStrTeam(Team, false))
             {
                 case STR_TEAM_GAME: str_format(aBuf, sizeof(aBuf), Localize(TempCode, "'%s' entered and joined the game"), pName); break;
                 case STR_TEAM_RED: str_format(aBuf, sizeof(aBuf), Localize(TempCode, "'%s' entered and joined the red team"), pName); break;
@@ -1125,7 +1105,7 @@ int CNetConverter::DeepGameMsgConvert6(CMsgPacker *pMsg, int Flags, int ToClient
         case GAMEMSG_TEAM_ALL:
         {
             const char *pMsg = "";
-            switch(GetStrTeam(Unpacker.GetInt(), m_GameFlags&GAMEFLAG_TEAMS))
+            switch(GetStrTeam(Unpacker.GetInt(), false))
             {
                 case STR_TEAM_GAME: pMsg = Localize(TempCode, "All players were moved to the game"); break;
                 case STR_TEAM_RED: pMsg = Localize(TempCode, "All players were moved to the red team"); break;
@@ -1143,7 +1123,7 @@ int CNetConverter::DeepGameMsgConvert6(CMsgPacker *pMsg, int Flags, int ToClient
         case GAMEMSG_TEAM_BALANCE_VICTIM:
         {
             const char *pMsg = "";
-            switch(GetStrTeam(Unpacker.GetInt(), m_GameFlags&GAMEFLAG_TEAMS))
+            switch(GetStrTeam(Unpacker.GetInt(), true))
             {
                 case STR_TEAM_RED: pMsg = Localize(TempCode, "You were moved to the red team due to team balancing"); break;
                 case STR_TEAM_BLUE: pMsg = Localize(TempCode, "You were moved to the blue team due to team balancing"); break;

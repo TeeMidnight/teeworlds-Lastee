@@ -22,7 +22,6 @@ private:
     int DeepGameMsgConvert6(CMsgPacker *pMsg, int Flags, int ToClientID);
     int DeepSystemMsgConvert6(CMsgPacker *pMsg, int Flags, int ToClientID);
 
-    int m_GameFlags;
     int64 m_aChatTick[MAX_CLIENTS];
     CUuid m_SnapItemEx[64];
     int m_NumSnapItemsEx;

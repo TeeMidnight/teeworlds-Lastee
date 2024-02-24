@@ -57,14 +57,8 @@ public:
 	int GetSpectatorID() const { return m_SpectatorID; }
 	int GetSpecMode() const { return m_SpecMode; }
 	bool SetSpectatorID(int SpecMode, int SpectatorID);
-	bool m_DeadSpecMode;
-	bool DeadCanFollow(CPlayer *pPlayer) const;
-	void UpdateDeadSpecMode();
 
 	bool m_IsReadyToEnter;
-	bool m_IsReadyToPlay;
-
-	bool m_RespawnDisabled;
 
 	//
 	int m_Vote;
@@ -85,8 +79,6 @@ public:
 
 	int m_RespawnTick;
 	int m_DieTick;
-	int m_Score;
-	int m_ScoreStartTick;
 	int m_LastActionTick;
 	int m_TeamChangeTick;
 
