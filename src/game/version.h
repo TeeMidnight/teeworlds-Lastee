@@ -13,4 +13,8 @@
 #define SETTINGS_FILENAME "settings07"
 
 static const char GAME_RELEASE_VERSION[8] = "0.7.5";
+
+#define MOD_NAME "Lastee"
+#define MOD_VERSION "0.1.0"
+static const char MOD_RELEASE_VERSION[8] = "0.1.0";
 #endif
