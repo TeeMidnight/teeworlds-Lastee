@@ -5,7 +5,10 @@
 
 #include <game/gamecore.h>
 
+#include <vector>
+
 class CEntity;
+class CDamageEntity;
 class CCharacter;
 
 /*
@@ -33,6 +36,8 @@ private:
 	CEntity *m_pNextTraverseEntity;
 	CEntity *m_apFirstEntityTypes[NUM_ENTTYPES];
 
+	std::vector<CDamageEntity *> m_vpDamageEntities;
+
 	class CGameContext *m_pGameServer;
 	class CConfig *m_pConfig;
 	class IServer *m_pServer;
@@ -41,6 +46,8 @@ public:
 	class CGameContext *GameServer() { return m_pGameServer; }
 	class CConfig *Config() { return m_pConfig; }
 	class IServer *Server() { return m_pServer; }
+
+	std::vector<CDamageEntity *> GetDamageVector() { return m_vpDamageEntities; }
 
 	bool m_ResetRequested;
 	bool m_Paused;
@@ -86,15 +93,31 @@ public:
 	CEntity *ClosestEntity(vec2 Pos, float Radius, int Type, CEntity *pNotThis);
 
 	/*
-		Function: interserct_CCharacter
+		Function: InterserctDamage
+			Finds the closest CDamageEntity that intersects the line.
+
+		Arguments:
+			Pos0 - Start position
+			Pos1 - End position
+			Radius - How for from the line the CDamageEntity is allowed to be.
+			NewPos - Intersection position
+			pNotThis - Entity to ignore intersecting with
+
+		Returns:
+			Returns a pointer to the closest hit or NULL of there is no intersection.
+	*/
+	CDamageEntity *IntersectDamage(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, class CEntity *pNotThis = 0);
+
+	/*
+		Function: InterserctCharacter
 			Finds the closest CCharacter that intersects the line.
 
 		Arguments:
-			pos0 - Start position
-			pos2 - End position
-			radius - How for from the line the CCharacter is allowed to be.
-			new_pos - Intersection position
-			notthis - Entity to ignore intersecting with
+			Pos0 - Start position
+			Pos1 - End position
+			Radius - How for from the line the CCharacter is allowed to be.
+			NewPos - Intersection position
+			pNotThis - Entity to ignore intersecting with
 
 		Returns:
 			Returns a pointer to the closest hit or NULL of there is no intersection.
@@ -148,6 +171,24 @@ public:
 
 	*/
 	void Tick();
+
+	/*
+		Function: AppendDamageEntity
+			Append a CDamageEnity to m_vpDamageEntities
+		
+		Arguments:
+			pEntity - Entity's pointer.
+	*/
+	void AppendDamageEntity(CDamageEntity *pEntity);
+
+	/*
+		Function: RemoveDamageEntity
+			Remove a CDamageEnity to m_vpDamageEntities
+		
+		Arguments:
+			pEntity - Entity's pointer.
+	*/
+	void RemoveDamageEntity(CDamageEntity *pEntity);
 };
 
 #endif

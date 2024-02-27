@@ -21,6 +21,8 @@ CEntity::CEntity(CGameWorld *pGameWorld, int ObjType, vec2 Pos, int ProximityRad
 
 	m_MarkedForDestroy = false;
 	m_Pos = Pos;
+
+	m_Label = CEntity::LABEL_NONE;
 }
 
 CEntity::~CEntity()
@@ -56,4 +58,13 @@ bool CEntity::GameLayerClipped(vec2 CheckPos)
 	int ry = round_to_int(CheckPos.y) / 32;
 	return (rx < -200 || rx >= GameServer()->Collision()->GetWidth()+200)
 			|| (ry < -200 || ry >= GameServer()->Collision()->GetHeight()+200);
+}
+
+CDamageEntity::CDamageEntity(CGameWorld *pGameWorld, int Objtype, vec2 Pos, int ProximityRadius) : 
+	CEntity(pGameWorld, Objtype, Pos, ProximityRadius)
+{
+	m_Health = 0;
+	m_Label |= CEntity::LABEL_DAMAGE;
+
+	GameWorld()->AppendDamageEntity(this);
 }

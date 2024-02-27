@@ -19,11 +19,11 @@ CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEner
 }
 
 
-bool CLaser::HitCharacter(vec2 From, vec2 To)
+bool CLaser::HitEntity(vec2 From, vec2 To)
 {
 	vec2 At;
 	CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
-	CCharacter *pHit = GameWorld()->IntersectCharacter(m_Pos, To, 0.f, At, pOwnerChar);
+	CDamageEntity *pHit = GameWorld()->IntersectDamage(m_Pos, To, 0.f, At, pOwnerChar);
 	if(!pHit)
 		return false;
 
@@ -48,7 +48,7 @@ void CLaser::DoBounce()
 
 	if(GameServer()->Collision()->IntersectLine(m_Pos, To, 0x0, &To))
 	{
-		if(!HitCharacter(m_Pos, To))
+		if(!HitEntity(m_Pos, To))
 		{
 			// intersected
 			m_From = m_Pos;
@@ -72,7 +72,7 @@ void CLaser::DoBounce()
 	}
 	else
 	{
-		if(!HitCharacter(m_Pos, To))
+		if(!HitEntity(m_Pos, To))
 		{
 			m_From = m_Pos;
 			m_Pos = To;

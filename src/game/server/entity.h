@@ -47,10 +47,17 @@ protected:
 	*/
 	vec2 m_Pos;
 
+	int m_Label;
+
 	/* Getters */
 	int GetID() const					{ return m_ID; }
 
 public:
+	enum
+	{
+		LABEL_NONE = 0,
+		LABEL_DAMAGE = 1 << 0,
+	};
 	/* Constructor */
 	CEntity(CGameWorld *pGameWorld, int Objtype, vec2 Pos, int ProximityRadius=0);
 
@@ -70,6 +77,8 @@ public:
 	const vec2 &GetPos() const			{ return m_Pos; }
 	float GetProximityRadius() const	{ return m_ProximityRadius; }
 	bool IsMarkedForDestroy() const		{ return m_MarkedForDestroy; }
+	int GetObjType() const 				{ return m_ObjType; }
+	int GetLabel() const 				{ return m_Label; }
 
 	/* Setters */
 	void MarkForDestroy()				{ m_MarkedForDestroy = true; }
@@ -141,6 +150,17 @@ public:
 	int NetworkClipped(int SnappingClient, vec2 CheckPos);
 
 	bool GameLayerClipped(vec2 CheckPos);
+};
+
+class CDamageEntity : public CEntity
+{
+protected:
+	int m_Health;
+
+public:
+	CDamageEntity(CGameWorld *pGameWorld, int Objtype, vec2 Pos, int ProximityRadius=0);
+
+	virtual bool TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weapon) { return true; }
 };
 
 #endif

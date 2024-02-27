@@ -42,7 +42,7 @@ MACRO_ALLOC_POOL_ID_IMPL(CCharacter, MAX_CLIENTS)
 
 // Character, "physical" player's part
 CCharacter::CCharacter(CGameWorld *pWorld)
-: CEntity(pWorld, CGameWorld::ENTTYPE_CHARACTER, vec2(0, 0), ms_PhysSize)
+: CDamageEntity(pWorld, CGameWorld::ENTTYPE_CHARACTER, vec2(0, 0), ms_PhysSize)
 {
 	m_Health = 0;
 	m_Armor = 0;
@@ -157,19 +157,22 @@ void CCharacter::HandleNinja()
 		// check if we hit anything along the way
 		const float Radius = GetProximityRadius() * 2.0f;
 		const vec2 Center = OldPos + (m_Pos - OldPos) * 0.5f;
-		CCharacter *aEnts[MAX_CLIENTS];
-		const int Num = GameWorld()->FindEntities(Center, Radius, (CEntity**)aEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 
-		for(int i = 0; i < Num; ++i)
+		std::vector<CDamageEntity *> Vector = GameWorld()->GetDamageVector();
+		
+		for(auto& pEnt : Vector)
 		{
-			if(aEnts[i] == this)
+			if(pEnt == this)
+				continue;
+
+			if(distance(pEnt->GetPos(), Center) >= Radius + pEnt->GetProximityRadius())
 				continue;
 
 			// make sure we haven't hit this object before
 			bool AlreadyHit = false;
-			for(int j = 0; j < m_NumObjectsHit; j++)
+			for(auto& pHit : m_vpHitObjects)
 			{
-				if(m_apHitObjects[j] == aEnts[i])
+				if(pHit == pEnt)
 				{
 					AlreadyHit = true;
 					break;
@@ -179,16 +182,15 @@ void CCharacter::HandleNinja()
 				continue;
 
 			// check so we are sufficiently close
-			if(distance(aEnts[i]->m_Pos, m_Pos) > Radius)
+			if(distance(pEnt->GetPos(), m_Pos) > Radius)
 				continue;
 
 			// Hit a player, give him damage and stuffs...
-			GameServer()->CreateSound(aEnts[i]->m_Pos, SOUND_NINJA_HIT);
-			if(m_NumObjectsHit < MAX_CLIENTS)
-				m_apHitObjects[m_NumObjectsHit++] = aEnts[i];
+			GameServer()->CreateSound(pEnt->GetPos(), SOUND_NINJA_HIT);
+			m_vpHitObjects.push_back(pEnt);
 
 			// set his velocity to fast upward (for now)
-			aEnts[i]->TakeDamage(vec2(0, -10.0f), m_Ninja.m_ActivationDir*-1, g_pData->m_Weapons.m_Ninja.m_pBase->m_Damage, m_pPlayer->GetCID(), WEAPON_NINJA);
+			pEnt->TakeDamage(vec2(0, -10.0f), m_Ninja.m_ActivationDir*-1, g_pData->m_Weapons.m_Ninja.m_pBase->m_Damage, m_pPlayer->GetCID(), WEAPON_NINJA);
 		}
 	}
 }
@@ -297,27 +299,27 @@ void CCharacter::FireWeapon()
 		{
 			GameServer()->CreateSound(m_Pos, SOUND_HAMMER_FIRE);
 
-			CCharacter *apEnts[MAX_CLIENTS];
 			int Hits = 0;
-			int Num = GameWorld()->FindEntities(ProjStartPos, GetProximityRadius()*0.5f, (CEntity**)apEnts,
-														MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 
-			for(int i = 0; i < Num; ++i)
+			std::vector<CDamageEntity *> Vector = GameWorld()->GetDamageVector();
+
+			for(auto& pTarget : Vector)
 			{
-				CCharacter *pTarget = apEnts[i];
-
-				if((pTarget == this) || GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL))
+				if((pTarget == this) || GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->GetPos(), NULL, NULL))
+					continue;
+				
+				if(distance(pTarget->GetPos(), ProjStartPos) >= GetProximityRadius()*0.f + pTarget->GetProximityRadius())
 					continue;
 
 				// set his velocity to fast upward (for now)
-				if(length(pTarget->m_Pos-ProjStartPos) > 0.0f)
-					GameServer()->CreateHammerHit(pTarget->m_Pos-normalize(pTarget->m_Pos-ProjStartPos)*GetProximityRadius()*0.5f);
+				if(length(pTarget->GetPos() - ProjStartPos) > 0.0f)
+					GameServer()->CreateHammerHit(pTarget->GetPos() - normalize(pTarget->GetPos() - ProjStartPos) * GetProximityRadius() * 0.5f);
 				else
 					GameServer()->CreateHammerHit(ProjStartPos);
 
 				vec2 Dir;
-				if(length(pTarget->m_Pos - m_Pos) > 0.0f)
-					Dir = normalize(pTarget->m_Pos - m_Pos);
+				if(length(pTarget->GetPos() - m_Pos) > 0.0f)
+					Dir = normalize(pTarget->GetPos() - m_Pos);
 				else
 					Dir = vec2(0.f, -1.f);
 
@@ -386,7 +388,7 @@ void CCharacter::FireWeapon()
 
 		case WEAPON_NINJA:
 		{
-			m_NumObjectsHit = 0;
+			m_vpHitObjects.clear();
 
 			m_Ninja.m_ActivationDir = Direction;
 			m_Ninja.m_CurrentMoveTime = g_pData->m_Weapons.m_Ninja.m_Movetime * Server()->TickSpeed() / 1000;

@@ -132,21 +132,21 @@ void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, int MaxDamag
 	}
 
 	// deal damage
-	CCharacter *apEnts[MAX_CLIENTS];
 	float Radius = g_pData->m_Explosion.m_Radius;
 	float InnerRadius = 48.0f;
 	float MaxForce = g_pData->m_Explosion.m_MaxForce;
-	int Num = m_World.FindEntities(Pos, Radius, (CEntity**)apEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
-	for(int i = 0; i < Num; i++)
+
+	std::vector<CDamageEntity *> Vector = m_World.GetDamageVector();
+	for(auto& pEnt : Vector)
 	{
-		vec2 Diff = apEnts[i]->GetPos() - Pos;
+		vec2 Diff = pEnt->GetPos() - Pos;
 		vec2 Force(0, MaxForce);
 		float l = length(Diff);
 		if(l)
 			Force = normalize(Diff) * MaxForce;
 		float Factor = 1 - clamp((l-InnerRadius)/(Radius-InnerRadius), 0.0f, 1.0f);
 		if((int)(Factor * MaxDamage))
-			apEnts[i]->TakeDamage(Force * Factor, Diff*-1, (int)(Factor * MaxDamage), Owner, Weapon);
+			pEnt->TakeDamage(Force * Factor, Diff*-1, (int)(Factor * MaxDamage), Owner, Weapon);
 	}
 }
 

@@ -1,7 +1,4 @@
-cmake_minimum_required(VERSION 2.8.12...3.19.1)
-if(CMAKE_VERSION VERSION_LESS 3.12)
-  cmake_policy(VERSION ${CMAKE_VERSION})
-endif()
+cmake_minimum_required(VERSION 3.12...3.19.1)
 
 file(STRINGS src/game/version.h VERSION_LINE
   LIMIT_COUNT 1
@@ -328,6 +325,7 @@ find_package(SDL2)
 find_package(Threads)
 find_package(Wavpack)
 find_package(Curl)
+find_package(PQXX)
 
 
 if(TARGET_OS AND TARGET_OS STREQUAL "mac")
@@ -381,9 +379,14 @@ show_dependency_status("SDL2" SDL2)
 show_dependency_status("Wavpack" WAVPACK)
 show_dependency_status("Zlib" ZLIB)
 show_dependency_status("Curl" CURL)
+show_dependency_status("Postgresql" PQXX)
 
 if(NOT(Python3_FOUND))
   message(SEND_ERROR "You must install Python to compile Teeworlds")
+endif()
+
+if(NOT(PQXX_FOUND))
+  message(SEND_ERROR "You must install Postgresql and libpqxx to compile the teeworlds server")
 endif()
 
 if(DDNETMASTER AND NOT(CURL_FOUND))
@@ -1733,7 +1736,10 @@ else()
 endif()
 
 # Libraries
-set(LIBS_SERVER ${LIBS})
+set(LIBS_SERVER 
+  ${LIBS}
+  ${PQXX_LIBRARIES}
+  )
 
 # Target
 set(TARGET_SERVER ${SERVER_EXECUTABLE})
@@ -2230,6 +2236,9 @@ foreach(target ${TARGETS_OWN})
   endif()
   if(HEADLESS_CLIENT)
     target_compile_definitions(${target} PRIVATE CONF_HEADLESS_CLIENT)
+  endif()
+  if(SERVER)
+    target_include_directories(${target} SYSTEM PRIVATE ${PQXX_INCLUDE_DIRS})
   endif()
   if(DDNETMASTER)
     target_compile_definitions(${target} PRIVATE CONF_DDNETMASTER)

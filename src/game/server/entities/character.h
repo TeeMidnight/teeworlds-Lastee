@@ -9,7 +9,7 @@
 #include <game/server/entity.h>
 
 
-class CCharacter : public CEntity
+class CCharacter : public CDamageEntity
 {
 	MACRO_ALLOC_POOL_ID()
 
@@ -24,13 +24,13 @@ public:
 
 	CCharacter(CGameWorld *pWorld);
 
-	virtual void Reset();
-	virtual void Destroy();
-	virtual void Tick();
-	virtual void TickDefered();
-	virtual void TickPaused();
-	virtual void Snap(int SnappingClient);
-	virtual void PostSnap();
+	void Reset() override;
+	void Destroy() override;
+	void Tick() override;
+	void TickDefered() override;
+	void TickPaused() override;
+	void Snap(int SnappingClient) override;
+	void PostSnap() override;
 
 	bool IsGrounded();
 
@@ -47,10 +47,9 @@ public:
 	void FireWeapon();
 
 	void Die(int Killer, int Weapon);
-	bool TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weapon);
+	bool TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weapon) override;
 
 	bool Spawn(class CPlayer *pPlayer, vec2 Pos);
-	bool Remove();
 
 	bool IncreaseHealth(int Amount);
 	bool IncreaseArmor(int Amount);
@@ -70,8 +69,7 @@ private:
 	bool m_Alive;
 
 	// weapon info
-	CEntity *m_apHitObjects[MAX_CLIENTS];
-	int m_NumObjectsHit;
+	std::vector<CDamageEntity *> m_vpHitObjects;
 
 	struct WeaponStat
 	{
@@ -104,7 +102,6 @@ private:
 	int m_NumInputs;
 	int m_Jumped;
 
-	int m_Health;
 	int m_Armor;
 
 	int m_TriggeredEvents;

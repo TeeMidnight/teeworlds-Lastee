@@ -7,6 +7,7 @@
 #include "gamecontroller.h"
 #include "gameworld.h"
 
+#include <algorithm>
 
 //////////////////////////////////////////////////
 // game world
@@ -21,6 +22,8 @@ CGameWorld::CGameWorld()
 	m_ResetRequested = false;
 	for(int i = 0; i < NUM_ENTTYPES; i++)
 		m_apFirstEntityTypes[i] = 0;
+	
+	m_vpDamageEntities.clear();
 }
 
 CGameWorld::~CGameWorld()
@@ -89,6 +92,9 @@ void CGameWorld::RemoveEntity(CEntity *pEnt)
 	// not in the list
 	if(!pEnt->m_pNextTypeEntity && !pEnt->m_pPrevTypeEntity && m_apFirstEntityTypes[pEnt->m_ObjType] != pEnt)
 		return;
+
+	if(pEnt->GetLabel() & CEntity::LABEL_DAMAGE)
+		RemoveDamageEntity((CDamageEntity *) pEnt);
 
 	// remove
 	if(pEnt->m_pPrevTypeEntity)
@@ -202,6 +208,36 @@ void CGameWorld::Tick()
 	RemoveEntities();
 }
 
+// TODO: should be more general
+CDamageEntity *CGameWorld::IntersectDamage(vec2 Pos0, vec2 Pos1, float Radius, vec2& NewPos, CEntity *pNotThis)
+{
+	// Find other players
+	float ClosestLen = distance(Pos0, Pos1) * 100.0f;
+	CDamageEntity *pClosest = 0;
+
+	std::vector<CDamageEntity *> Vector = GetDamageVector();
+
+	for(auto& p : Vector)
+ 	{
+		if(p == pNotThis)
+			continue;
+
+		vec2 IntersectPos = closest_point_on_line(Pos0, Pos1, p->m_Pos);
+		float Len = distance(p->m_Pos, IntersectPos);
+		if(Len < p->m_ProximityRadius+Radius)
+		{
+			Len = distance(Pos0, IntersectPos);
+			if(Len < ClosestLen)
+			{
+				NewPos = IntersectPos;
+				ClosestLen = Len;
+				pClosest = p;
+			}
+		}
+	}
+
+	return pClosest;
+}
 
 // TODO: should be more general
 CCharacter *CGameWorld::IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2& NewPos, CEntity *pNotThis)
@@ -258,4 +294,18 @@ CEntity *CGameWorld::ClosestEntity(vec2 Pos, float Radius, int Type, CEntity *pN
 	}
 
 	return pClosest;
+}
+
+void CGameWorld::AppendDamageEntity(CDamageEntity *pEntity)
+{
+	m_vpDamageEntities.push_back(pEntity);
+}
+
+void CGameWorld::RemoveDamageEntity(CDamageEntity *pEntity)
+{
+	std::vector<CDamageEntity *>::iterator EntIter = std::find(m_vpDamageEntities.begin(), m_vpDamageEntities.end(), pEntity);
+	if(EntIter == m_vpDamageEntities.end())
+		return;
+	
+	m_vpDamageEntities.erase(EntIter);
 }

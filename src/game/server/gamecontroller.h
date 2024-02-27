@@ -39,11 +39,10 @@ class CGameController
 		int m_FriendlyTeam;
 		float m_Score;
 	};
-	vec2 m_aaSpawnPoints[3][64];
-	int m_aNumSpawnPoints[3];
+	vec2 m_SpawnPoint;
 
 	float EvaluateSpawnPos(CSpawnEval *pEval, vec2 Pos) const;
-	void EvaluateSpawnType(CSpawnEval *pEval, int Type) const;	
+	void EvaluateSpawnType(CSpawnEval *pEval) const;	
 	
 	// team
 	int ClampTeam(int Team) const;
