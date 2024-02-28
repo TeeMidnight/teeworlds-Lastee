@@ -610,8 +610,12 @@ static int PlayerFlags_SixToSeven(int Flags)
 void CGameContext::OnClientDirectInput(int ClientID, void *pInput)
 {
 	auto *pPlayerInput = (CNetObj_PlayerInput *)pInput;
+	bool DDNetAimline = false;
 	if(Server()->ClientProtocol(ClientID) == NETPROTOCOL_SIX)
+	{
+		DDNetAimline = pPlayerInput->m_PlayerFlags & protocol6::PLAYERFLAG_AIM;
 		pPlayerInput->m_PlayerFlags = PlayerFlags_SixToSeven(pPlayerInput->m_PlayerFlags);
+	}
 
 	int NumFailures = m_NetObjHandler.NumObjFailures();
 	if(m_NetObjHandler.ValidateObj(NETOBJTYPE_PLAYERINPUT, pInput, sizeof(CNetObj_PlayerInput)) == -1)
@@ -624,7 +628,10 @@ void CGameContext::OnClientDirectInput(int ClientID, void *pInput)
 		}
 	}
 	else
+	{
+		m_apPlayers[ClientID]->m_DDNetAimline = DDNetAimline;
 		m_apPlayers[ClientID]->OnDirectInput(pPlayerInput);
+	}
 }
 
 void CGameContext::OnClientPredictedInput(int ClientID, void *pInput)

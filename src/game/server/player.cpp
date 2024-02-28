@@ -31,6 +31,7 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Dummy, bool AsSpe
 	m_InactivityTickCounter = 0;
 	m_Dummy = Dummy;
 	m_Spawning = false;
+	m_DDNetAimline = false;
 	mem_zero(&m_Latency, sizeof(m_Latency));
 }
 

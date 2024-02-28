@@ -101,6 +101,7 @@ public:
 		int m_Max;
 	} m_Latency;
 
+	bool m_DDNetAimline;
 private:
 	CCharacter *m_pCharacter;
 	CGameContext *m_pGameServer;

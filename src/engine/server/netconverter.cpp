@@ -571,6 +571,8 @@ bool CNetConverter::DeepSnapConvert6(void *pItem, void *pSnapClass, int Type, in
 
             pObj6->m_Jumped = pObj7->m_Jumped;
             pObj6->m_PlayerFlags = PlayerFlags_SevenToSix(((CCharacter *) pSnapClass)->GetPlayer()->m_PlayerFlags);
+            if(((CCharacter *) pSnapClass)->GetPlayer()->m_DDNetAimline)
+                pObj6->m_PlayerFlags |= protocol6::PLAYERFLAG_AIM;
             pObj6->m_Tick = pObj7->m_Tick;
             pObj6->m_VelX = pObj7->m_VelX;
             pObj6->m_VelY = pObj7->m_VelY;
