@@ -1058,8 +1058,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			CNetMsg_Cl_SetTeam *pMsg = (CNetMsg_Cl_SetTeam *)pRawMsg;
 
 			if(pPlayer->GetTeam() == pMsg->m_Team ||
-				(Config()->m_SvSpamprotection && pPlayer->m_LastSetTeamTick && pPlayer->m_LastSetTeamTick+Server()->TickSpeed()*3 > Server()->Tick()) ||
-				(pMsg->m_Team != TEAM_SPECTATORS) || pPlayer->m_TeamChangeTick > Server()->Tick())
+				(Config()->m_SvSpamprotection && pPlayer->m_LastSetTeamTick && pPlayer->m_LastSetTeamTick+Server()->TickSpeed()*3 > Server()->Tick()) || 
+					pPlayer->m_TeamChangeTick > Server()->Tick())
 				return;
 
 			pPlayer->m_LastSetTeamTick = Server()->Tick();
